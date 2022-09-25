@@ -11,4 +11,4 @@ Create links to archived mods
     ~/.local/bin/pyqt5-tools designer
 
 ## Regenerating UI
-pyuic5 -o main_window_ui.py ui/promptcraft.ui
+pyuic5 -o main_window_ui.py ui/modlink.ui
