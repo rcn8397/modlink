@@ -13,6 +13,7 @@ from PyQt5.uic import loadUi
 from main_window_ui import Ui_MainWindow
 
 from time import sleep
+from pycore.core import fsutil
 
 colors = [("Red",            "#FF0000"),
           ("Green",          "#00FF00"),
@@ -22,6 +23,8 @@ colors = [("Red",            "#FF0000"),
           ("Electric Green", "#41CD52"),
           ("Dark Blue",      "#222840"),
           ("Yellow",         "#F9E56d")]
+
+modArchive = dict()
 
 def get_rgb_from_hex(code):
     code_hex = code.replace("#", "")
@@ -39,6 +42,25 @@ class Worker( QObject ):
             
         self.finished.emit()
 
+class ConfigBuilder( Worker ):
+    def __init__( self, archivePath ):
+        super( ConfigBuilder, self ).__init__()
+        self._archivePath = archivePath
+        self._fname = 'tmp.config.json'
+        
+    def run( self ):
+        global modArchive
+
+        modArchive = dict()
+        
+        for i, fname in enumerate( fsutil.yieldall( self._archivePath, '*' ) ):
+            modArchive[ fname ] = dict()
+            modArchive[ fname ][ 'linked' ] = False
+            #self.progress.emit( i + 1 )
+            
+        self.finished.emit()
+
+
 class ReadOnlyDelegate( QStyledItemDelegate ):
     def createEditor( self, parent, option, index ):
         return
@@ -52,13 +74,13 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.workers = []
         self.threads = dict()
 
-    def create_worker( self ):
+    def create_worker( self, _class, *args, **kwargs ):
         
         thread = QThread()
         if thread not in self.threads.keys():
             self.threads[ thread ] = []
         
-        worker = Worker()
+        worker = _class( *args, **kwargs )
         self.threads[ thread ].append( worker )
         
         worker.moveToThread( thread )
@@ -74,6 +96,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         print( n )
         
     def connectSignalSlots(self ):
+        self.actionNew.triggered.connect( self.new_config )
         self.actionLoad.triggered.connect( self.load )
         self.actionSave.triggered.connect( self.save )
         self.actionExit.triggered.connect( self.close )
@@ -108,9 +131,26 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.tableWidget.setItemDelegateForColumn( 1, self.readonly_delegate )
 
 
+    def new_config( self ):
+        global modArchive
+        print( 'ModArchive = [{}]'.format( modArchive ) )
+        self.archivePath = self.modArchivePathEdit.text()
+        self.modPath     = self.modFolderPathEdit.text()
+
+        if self.archivePath == '' or self.modPath == '':
+            print( 'error' )
+            # Add popup here
+
+        # Create a placeholder file name
+        self.config_file = 'tmp.config.json'
+        self.create_worker( ConfigBuilder, archivePath = self.archivePath )       
+        print( 'ModArchive = [{}]'.format( modArchive ) )
+            
+        
     def load( self ):
         print( 'load' )
-        self.create_worker()
+        path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
+        #self.create_worker()
         pass
 
     def save( self ):
@@ -118,9 +158,11 @@ class Window( QMainWindow, Ui_MainWindow ):
         pass
     
     def createLinks(self):
+        print( 'ModArchive = [{}]'.format( modArchive ) )
         pass
 
     def clearLinks(self):
+        print( 'ModArchive = [{}]'.format( modArchive ) )
         pass
 
     def updateModFolder(self):
