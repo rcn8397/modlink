@@ -4,7 +4,7 @@ import os
 from random import randint
 
 from PyQt5.QtWidgets import (
-    QApplication, QDialog, QMainWindow, QMessageBox, QFileDialog, QTreeWidgetItem, QStyledItemDelegate
+    QApplication, QDialog, QMainWindow, QMessageBox, QFileDialog, QTreeWidgetItem, QStyledItemDelegate, QFileDialog
 )
 from PyQt5.Qt import *
 from PyQt5.QtCore import *
@@ -38,7 +38,7 @@ class Worker( QObject ):
             self.progress.emit( i + 1 )
             
         self.finished.emit()
-    
+
 class ReadOnlyDelegate( QStyledItemDelegate ):
     def createEditor( self, parent, option, index ):
         return
@@ -125,13 +125,16 @@ class Window( QMainWindow, Ui_MainWindow ):
 
     def updateModFolder(self):
         print( 'updateModFolder' )
-        self.create_worker()
+        path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
+        self.modFolderPathEdit.setText( path )
+        #self.create_worker()
         pass
 
     def updateArchiveFolder(self):
         print( 'updateArchiveFolder' )
-        self.create_worker()
-        
+        path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
+        self.modArchivePathEdit.setText( path )
+        #self.create_worker()
         pass
 
 if __name__ == "__main__":
