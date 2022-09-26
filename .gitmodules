@@ -1,0 +1,3 @@
+[submodule "pycore"]
+	path = pycore
+	url = git@github.com:rcn8397/pycore.git

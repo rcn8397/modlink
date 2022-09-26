@@ -12,6 +12,8 @@ from PyQt5.QtCore import *
 from PyQt5.uic import loadUi
 from main_window_ui import Ui_MainWindow
 
+from time import sleep
+
 colors = [("Red",            "#FF0000"),
           ("Green",          "#00FF00"),
           ("Blue",           "#0000FF"),
@@ -26,6 +28,17 @@ def get_rgb_from_hex(code):
     rgb = tuple(int(code_hex[i:i+2], 16) for i in (0, 2, 4))
     return QColor.fromRgb(rgb[0], rgb[1], rgb[2])
 
+class Worker( QObject ):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run( self ):
+        for i in range( 5 ):
+            sleep( 1 )
+            self.progress.emit( i + 1 )
+            
+        self.finished.emit()
+    
 class ReadOnlyDelegate( QStyledItemDelegate ):
     def createEditor( self, parent, option, index ):
         return
@@ -36,7 +49,29 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.setupUi(self)
         self.initTable()
         self.connectSignalSlots()
+        self.workers = []
+        self.threads = dict()
 
+    def create_worker( self ):
+        
+        thread = QThread()
+        if thread not in self.threads.keys():
+            self.threads[ thread ] = []
+        
+        worker = Worker()
+        self.threads[ thread ].append( worker )
+        
+        worker.moveToThread( thread )
+        thread.started.connect( worker.run )
+        worker.finished.connect( thread.quit )
+        worker.finished.connect( worker.deleteLater )
+        thread.finished.connect( thread.deleteLater )
+        worker.progress.connect( self.reportProgress )
+
+        thread.start()
+
+    def reportProgress( self, n ):
+        print( n )
         
     def connectSignalSlots(self ):
         self.actionLoad.triggered.connect( self.load )
@@ -74,7 +109,8 @@ class Window( QMainWindow, Ui_MainWindow ):
 
 
     def load( self ):
-        print( 'load' )        
+        print( 'load' )
+        self.create_worker()
         pass
 
     def save( self ):
@@ -85,6 +121,17 @@ class Window( QMainWindow, Ui_MainWindow ):
         pass
 
     def clearLinks(self):
+        pass
+
+    def updateModFolder(self):
+        print( 'updateModFolder' )
+        self.create_worker()
+        pass
+
+    def updateArchiveFolder(self):
+        print( 'updateArchiveFolder' )
+        self.create_worker()
+        
         pass
 
 if __name__ == "__main__":
