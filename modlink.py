@@ -188,6 +188,12 @@ class Window( QMainWindow, Ui_MainWindow ):
         print( 'ModArchive = [{}]'.format( modArchive ) )
 
 
+    def installMod( self ):
+        pass
+
+    def uninstallMod( self ):
+        pass
+    
     def load( self ):
         print( 'load' )
         path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
