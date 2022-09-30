@@ -12,9 +12,19 @@ from PyQt5.QtCore import *
 
 from PyQt5.uic import loadUi
 from main_window_ui import Ui_MainWindow
+#from settings_window_ui import Ui_SettingsWindow
+from settings_window_ui import Ui_SettingsDialog
 
 from time import sleep
 from pycore.core import fsutil
+
+DEBUG = True
+if DEBUG:
+    def pyqt_set_trace():
+        from PyQt5.QtCore import pyqtRemoveInputHook
+        from pdb import set_trace
+        pyqtRemoveInputHook()
+        set_trace()
 
 colors = [("Red",            "#FF0000"),
           ("Green",          "#00FF00"),
@@ -106,14 +116,15 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.actionLoad.triggered.connect( self.load )
         self.actionSave.triggered.connect( self.save )
         self.actionExit.triggered.connect( self.close )
+        self.actionPreferences.triggered.connect( self.preferences )
 
     def initTable(self):
-        global modArchive        
+        global modArchive
         print( 'init Table' )
         self.readonly_delegate = ReadOnlyDelegate( self.tableWidget )
 
         is_empty = len( modArchive ) == 0
-        
+
         if is_empty and os.path.exists( TMP_FILE ):
             print( 'Reading previous temp file' )
             with open( TMP_FILE, 'r' ) as f:
@@ -125,7 +136,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         rows = len( modArchive )
         first_item = next( iter( modArchive ) )
         columns = len( modArchive[ first_item ] ) + 1
-            
+
         self.tableWidget.setRowCount( rows )
         self.tableWidget.setColumnCount( columns + 1 )
         self.tableWidget.setHorizontalHeaderLabels( ["Path", "Linked", "Enabled" ] )
@@ -140,7 +151,7 @@ class Window( QMainWindow, Ui_MainWindow ):
                 link_str = 'True'
             else:
                 state = Qt.Unchecked
-                link_str = 'False'                
+                link_str = 'False'
 
             item_linked = QTableWidgetItem( link_str )
             item_enabled = QTableWidgetItem()
@@ -167,9 +178,9 @@ class Window( QMainWindow, Ui_MainWindow ):
 
         path    = self.tableWidget.item( row, 0 )
         linked  = self.tableWidget.item( row, 1 )
-        enabled = self.tableWidget.item( row, 2 ) 
+        enabled = self.tableWidget.item( row, 2 )
         print( path.text(), linked.text(), enabled.checkState()==Qt.Checked )
-            
+
 
     def new_config( self ):
         global modArchive
@@ -193,7 +204,7 @@ class Window( QMainWindow, Ui_MainWindow ):
 
     def uninstallMod( self ):
         pass
-    
+
     def load( self ):
         print( 'load' )
         path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
@@ -225,6 +236,32 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.modArchivePathEdit.setText( path )
         #self.create_worker()
         pass
+
+    def preferences( self ):
+        print( 'Opening preferences' )
+        dialog = SettingsDialog( self )
+        dialog.exec()
+    
+
+class SettingsDialog( QDialog ):
+    def __init__(self, parent = None ):
+        super().__init__( parent )
+        self.ui = Ui_SettingsDialog()
+        self.ui.setupUi( self )
+        #pyqt_set_trace()
+
+    def load( self ):
+        print( 'Load Settings' )
+
+    def browseArchivePath( self ):
+        print( 'save' )
+
+
+    def browseInstallPath( self ): pass
+    def browseTmpPath( self ): pass
+    def save_as( self ):
+        print( 'save as ')
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
