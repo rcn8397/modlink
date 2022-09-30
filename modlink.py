@@ -248,18 +248,31 @@ class SettingsDialog( QDialog ):
         super().__init__( parent )
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi( self )
-        #pyqt_set_trace()
+        
 
     def load( self ):
+        path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
+        pyqt_set_trace()
+        self.ui.settingsFilePathLineEdit.setText( path )
         print( 'Load Settings' )
 
     def browseArchivePath( self ):
-        print( 'save' )
+        path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
+        self.ui.modArchivePathLineEdit.setText( path )
 
-
-    def browseInstallPath( self ): pass
-    def browseTmpPath( self ): pass
+    def browseInstallPath( self ):
+        path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
+        self.ui.modInstallPathLineEdit.setText( path )
+        
+    def browseTmpPath( self ):
+        path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
+        self.ui.tmpPathLineEdit.setText( path )
+        
     def save_as( self ):
+        print( 'Settings file : {}'.format( self.ui.settingsFilePathLineEdit.text() ) )
+        print( 'Mod Archive path :{} '.format( self.ui.modArchivePathLineEdit.text() ) )
+        print( 'Mod Install path :{} '.format( self.ui.modInstallPathLineEdit.text() ) )
+        print( 'Tmp path :{} '.format( self.ui.tmpPathLineEdit.text() ) )        
         print( 'save as ')
 
 
