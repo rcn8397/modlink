@@ -243,7 +243,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         result = dialog.exec()
         if result == QDialog.Accepted:
             print( 'Accepted!!!!!' )
-    
+
 
 class SettingsDialog( QDialog ):
     def __init__(self, parent = None ):
@@ -254,11 +254,12 @@ class SettingsDialog( QDialog ):
     def reject( self ):
         print( 'rejected' )
         super().reject()
-        
+
     def accept( self ):
         print( 'accpeted' )
+        self.save()
         super().accept()
-        
+
     def load( self ):
         path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
         pyqt_set_trace()
@@ -272,17 +273,57 @@ class SettingsDialog( QDialog ):
     def browseInstallPath( self ):
         path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
         self.ui.modInstallPathLineEdit.setText( path )
-        
+
     def browseTmpPath( self ):
         path = QFileDialog.getExistingDirectory( self, 'Mod Folder', 'All Directories' )
         self.ui.tmpPathLineEdit.setText( path )
-        
+
     def save_as( self ):
         print( 'Settings file : {}'.format( self.ui.settingsFilePathLineEdit.text() ) )
         print( 'Mod Archive path :{} '.format( self.ui.modArchivePathLineEdit.text() ) )
         print( 'Mod Install path :{} '.format( self.ui.modInstallPathLineEdit.text() ) )
-        print( 'Tmp path :{} '.format( self.ui.tmpPathLineEdit.text() ) )        
+        print( 'Tmp path :{} '.format( self.ui.tmpPathLineEdit.text() ) )
         print( 'save as ')
+
+    def create_paths( self ):
+        paths = self.cfg[ 'Settings' ][ 'Paths' ]
+        for key, path in paths.items():
+            if key == 'SettingsFile':
+                continue
+            path = os.path.expanduser( path )
+            print( 'Attempting to create path: {}'.format( path ) )
+            fsutil.mkdir_p( path )
+
+    def save( self ):
+        settings_file    = os.path.expanduser( self.ui.settingsFilePathLineEdit.text() )
+        mod_archive_path = os.path.expanduser( self.ui.modArchivePathLineEdit.text() )
+        mod_install_path = os.path.expanduser( self.ui.modInstallPathLineEdit.text() )
+        tmp_path         = os.path.expanduser( self.ui.tmpPathLineEdit.text() )
+
+        print( 'Settings file : {}'.format( settings_file ) )
+        print( 'Mod Archive path :{} '.format( mod_archive_path ) )
+        print( 'Mod Install path :{} '.format( mod_install_path ) )
+        print( 'Tmp path :{} '.format( tmp_path ) )
+
+        self.cfg = { 'Settings' :
+                     { 'Paths' :
+                       {
+                           'SettingsFile'   : settings_file,
+                           'ModArchivePath' : mod_archive_path,
+                           'ModInstallPath' : mod_install_path,
+                           'TmpPath'        : tmp_path
+                       },
+                       'Placeholder' : False
+                     }
+        }
+
+        self.create_paths()
+        
+        with open( settings_file, 'w' ) as f:
+            json.dump( self.cfg, f, indent = 4, sort_keys = False )
+            pass
+
+        print( 'save')
 
 
 if __name__ == "__main__":
