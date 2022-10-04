@@ -240,7 +240,9 @@ class Window( QMainWindow, Ui_MainWindow ):
     def preferences( self ):
         print( 'Opening preferences' )
         dialog = SettingsDialog( self )
-        dialog.exec()
+        result = dialog.exec()
+        if result == QDialog.Accepted:
+            print( 'Accepted!!!!!' )
     
 
 class SettingsDialog( QDialog ):
@@ -248,8 +250,15 @@ class SettingsDialog( QDialog ):
         super().__init__( parent )
         self.ui = Ui_SettingsDialog()
         self.ui.setupUi( self )
-        
 
+    def reject( self ):
+        print( 'rejected' )
+        super().reject()
+        
+    def accept( self ):
+        print( 'accpeted' )
+        super().accept()
+        
     def load( self ):
         path = QFileDialog.getOpenFileName( self, 'Mod Configuration File', '*.*' )[0]
         pyqt_set_trace()
