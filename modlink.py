@@ -38,6 +38,17 @@ colors = [("Red",            "#FF0000"),
 modArchive = dict()
 
 TMP_FILE='tmp.config.json'
+DEFAULT_SETTINGS_DIR  = os.path.expanduser( '~/.modlink' )
+DEFAULT_SETTINGS_FILE = 'settings.ini'
+DEFAULT_SETTINGS_PATH = os.path.join( DEFAULT_SETTINGS_DIR, DEFAULT_SETTINGS_FILE )
+
+default_paths = {
+            "ModArchivePath": "/home/ryan/.modlink/archive",
+            "ModInstallPath": "/home/ryan/.modlink/install",
+            "TmpPath"       : "/home/ryan/.modlink/tmp"
+    }
+
+qsettings = QSettings( 'modlink', 'settings' )
 
 def get_rgb_from_hex(code):
     code_hex = code.replace("#", "")
@@ -54,6 +65,7 @@ class Worker( QObject ):
             self.progress.emit( i + 1 )
 
         self.finished.emit()
+
 
 class ConfigBuilder( Worker ):
     def __init__( self, archivePath ):
@@ -84,6 +96,7 @@ class Window( QMainWindow, Ui_MainWindow ):
     def __init__( self, parent = None ):
         super().__init__(parent)
         self.setupUi(self)
+        self.initConfig()
         self.initTable()
         self.connectSignalSlots()
         self.workers = []
@@ -112,11 +125,25 @@ class Window( QMainWindow, Ui_MainWindow ):
         print( n )
 
     def connectSignalSlots(self ):
-        self.actionNew.triggered.connect( self.new_config )
+        #self.actionNew.triggered.connect( self.new_config )
         self.actionLoad.triggered.connect( self.load )
         self.actionSave.triggered.connect( self.save )
         self.actionExit.triggered.connect( self.close )
         self.actionPreferences.triggered.connect( self.preferences )
+
+
+    def initConfig(self, path = None):
+        global qsettings
+        self.settings = qsettings
+        for key, value in default_paths.items():
+            setting = 'Paths/{}'.format( key )
+            if not self.settings.contains( setting ):
+                print( 'Initializing {}: {}'.format( setting, value ) )
+                self.settings.setValue( setting, value )
+            
+        print( self.settings.fileName() )
+        path = DEFAULT_SETTINGS_PATH
+
 
     def initTable(self):
         global modArchive
@@ -124,7 +151,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.readonly_delegate = ReadOnlyDelegate( self.tableWidget )
 
         is_empty = len( modArchive ) == 0
-
+        
         if is_empty and os.path.exists( TMP_FILE ):
             print( 'Reading previous temp file' )
             with open( TMP_FILE, 'r' ) as f:
@@ -182,21 +209,22 @@ class Window( QMainWindow, Ui_MainWindow ):
         print( path.text(), linked.text(), enabled.checkState()==Qt.Checked )
 
 
-    def new_config( self ):
-        global modArchive
-        print( 'ModArchive = [{}]'.format( modArchive ) )
-        self.archivePath = self.modArchivePathEdit.text()
-        self.modPath     = self.modFolderPathEdit.text()
-
-        if self.archivePath == '' or self.modPath == '':
-            print( 'error' )
-            # Add popup here
-
-        # Create a placeholder file name
-        self.config_file = 'tmp.config.json'
-        worker = self.create_worker( ConfigBuilder, archivePath = self.archivePath )
-        worker.finished.connect( self.initTable )
-        print( 'ModArchive = [{}]'.format( modArchive ) )
+#        
+#    def new_config( self ):
+#        global modArchive
+#        print( 'ModArchive = [{}]'.format( modArchive ) )
+#        self.archivePath = self.modArchivePathEdit.text()
+#        self.modPath     = self.modFolderPathEdit.text()
+#
+#        if self.archivePath == '' or self.modPath == '':
+#            print( 'error' )
+#            # Add popup here
+#
+#        # Create a placeholder file name
+#        self.config_file = 'tmp.config.json'
+#        worker = self.create_worker( ConfigBuilder, archivePath = self.archivePath )
+#        worker.finished.connect( self.initTable )
+#        print( 'ModArchive = [{}]'.format( modArchive ) )
 
 
     def installMod( self ):
@@ -279,51 +307,28 @@ class SettingsDialog( QDialog ):
         self.ui.tmpPathLineEdit.setText( path )
 
     def save_as( self ):
-        print( 'Settings file : {}'.format( self.ui.settingsFilePathLineEdit.text() ) )
         print( 'Mod Archive path :{} '.format( self.ui.modArchivePathLineEdit.text() ) )
         print( 'Mod Install path :{} '.format( self.ui.modInstallPathLineEdit.text() ) )
         print( 'Tmp path :{} '.format( self.ui.tmpPathLineEdit.text() ) )
         print( 'save as ')
 
     def create_paths( self ):
-        paths = self.cfg[ 'Settings' ][ 'Paths' ]
-        for key, path in paths.items():
-            if key == 'SettingsFile':
-                continue
+        global qsettings
+        pyqt_set_trace()
+        keys = [ path for path in qsettings.allKeys() if 'Paths/' in path ]
+        for key in keys:
+            path = qsettings.value( key )
             path = os.path.expanduser( path )
             print( 'Attempting to create path: {}'.format( path ) )
             fsutil.mkdir_p( path )
 
     def save( self ):
-        settings_file    = os.path.expanduser( self.ui.settingsFilePathLineEdit.text() )
-        mod_archive_path = os.path.expanduser( self.ui.modArchivePathLineEdit.text() )
-        mod_install_path = os.path.expanduser( self.ui.modInstallPathLineEdit.text() )
-        tmp_path         = os.path.expanduser( self.ui.tmpPathLineEdit.text() )
-
-        print( 'Settings file : {}'.format( settings_file ) )
-        print( 'Mod Archive path :{} '.format( mod_archive_path ) )
-        print( 'Mod Install path :{} '.format( mod_install_path ) )
-        print( 'Tmp path :{} '.format( tmp_path ) )
-
-        self.cfg = { 'Settings' :
-                     { 'Paths' :
-                       {
-                           'SettingsFile'   : settings_file,
-                           'ModArchivePath' : mod_archive_path,
-                           'ModInstallPath' : mod_install_path,
-                           'TmpPath'        : tmp_path
-                       },
-                       'Placeholder' : False
-                     }
-        }
-
+        global qsettings
+        qsettings.setValue( 'Paths/ModArchivePath', os.path.expanduser( self.ui.modArchivePathLineEdit.text() ) )
+        qsettings.setValue( 'Paths/ModInstallPath', os.path.expanduser( self.ui.modInstallPathLineEdit.text() ) )
+        qsettings.setValue( 'Paths/TmpPath',        os.path.expanduser( self.ui.tmpPathLineEdit.text() ) )
         self.create_paths()
-        
-        with open( settings_file, 'w' ) as f:
-            json.dump( self.cfg, f, indent = 4, sort_keys = False )
-            pass
 
-        print( 'save')
 
 
 if __name__ == "__main__":
