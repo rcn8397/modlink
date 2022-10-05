@@ -37,11 +37,6 @@ colors = [("Red",            "#FF0000"),
 
 modArchive = dict()
 
-TMP_FILE='tmp.config.json'
-DEFAULT_SETTINGS_DIR  = os.path.expanduser( '~/.modlink' )
-DEFAULT_SETTINGS_FILE = 'settings.ini'
-DEFAULT_SETTINGS_PATH = os.path.join( DEFAULT_SETTINGS_DIR, DEFAULT_SETTINGS_FILE )
-
 default_paths = {
             "ModArchivePath": "/home/ryan/.modlink/archive",
             "ModInstallPath": "/home/ryan/.modlink/install",
@@ -68,23 +63,24 @@ class Worker( QObject ):
 
 
 class ConfigBuilder( Worker ):
-    def __init__( self, archivePath ):
+    def __init__( self, path ):
         super( ConfigBuilder, self ).__init__()
-        self._archivePath = archivePath
-        self._fname = TMP_FILE
+        
+        self._path = path
 
     def run( self ):
         global modArchive
 
-        modArchive = dict()
-
-        for i, fname in enumerate( fsutil.yieldall( self._archivePath, '*' ) ):
-            modArchive[ fname ] = dict()
-            modArchive[ fname ][ 'linked' ] = False
+        modData = dict()
+        pyqt_set_trace()
+        dir_path = os.path.dirname( self._path )
+        for i, fname in enumerate( fsutil.yieldall( dir_path, '*' ) ):
+            modData[ fname ] = dict()
+            modData[ fname ][ 'linked' ] = False
             self.progress.emit( i + 1 )
 
-        with open( self._fname, 'w' ) as f:
-            json.dump( modArchive, f, indent = 4, sort_keys = False )
+        with open( self._path, 'w' ) as f:
+            json.dump( modData, f, indent = 4, sort_keys = False )
         self.finished.emit()
 
 
@@ -96,11 +92,16 @@ class Window( QMainWindow, Ui_MainWindow ):
     def __init__( self, parent = None ):
         super().__init__(parent)
         self.setupUi(self)
-        self.initConfig()
-        self.initTable()
-        self.connectSignalSlots()
+
+        # Create the work pool
         self.workers = []
         self.threads = dict()
+
+        # Init config
+        self.initConfig()
+
+        self.connectSignalSlots()
+        self.updateModArchiveTable()
 
     def create_worker( self, _class, *args, **kwargs ):
 
@@ -142,34 +143,56 @@ class Window( QMainWindow, Ui_MainWindow ):
                 self.settings.setValue( setting, value )
             
         print( self.settings.fileName() )
-        path = DEFAULT_SETTINGS_PATH
 
-
-    def initTable(self):
-        global modArchive
-        print( 'init Table' )
-        self.readonly_delegate = ReadOnlyDelegate( self.tableWidget )
-
-        is_empty = len( modArchive ) == 0
+    def updateModData( self ):
+        global qsettings
+        modArchivePath = qsettings.value( 'Paths/ModArchivePath' )
+        modArchiveData = 'modlink.json'
+        fspath = os.path.join( modArchivePath, modArchiveData )
+        print( fspath )
         
-        if is_empty and os.path.exists( TMP_FILE ):
-            print( 'Reading previous temp file' )
-            with open( TMP_FILE, 'r' ) as f:
-                modArchive = json.load( f )
+        if not os.path.exists( fspath ):
+            worker = self.create_worker( ConfigBuilder, path = fspath )
+            worker.finished.connect( self.updateModArchiveTable )
+
+            # Need to create it
+            print( 'Mod Archive Data not found, creating it' )
+        
+
+    def updateModArchiveTable(self):
+        global qsettings
+        modArchivePath = qsettings.value( 'Paths/ModArchivePath' )
+        modArchiveData = 'modlink.json'
+        fspath = os.path.join( modArchivePath, modArchiveData )
+        print( fspath )
+
+        # If the modData doesn't exist, create it and return
+        if not os.path.exists( fspath ):
+            return self.updateModData()
+
+        # Else load the modData and build the table
+        modData = None
+        with open( fspath, 'r' ) as f:
+            modData = json.load( f )
+        
+        is_empty = len( modData ) == 0
+        
+        print( 'Building Archives Table' )        
+        self.readonly_delegate = ReadOnlyDelegate( self.archiveModstableWidget )
 
         if is_empty:
             return
 
-        rows = len( modArchive )
-        first_item = next( iter( modArchive ) )
-        columns = len( modArchive[ first_item ] ) + 1
+        rows = len( modData )
+        first_item = next( iter( modData ) )
+        columns = len( modData[ first_item ] ) + 1
 
-        self.tableWidget.setRowCount( rows )
-        self.tableWidget.setColumnCount( columns + 1 )
-        self.tableWidget.setHorizontalHeaderLabels( ["Path", "Linked", "Enabled" ] )
+        self.archiveModstableWidget.setRowCount( rows )
+        self.archiveModstableWidget.setColumnCount( columns + 1 )
+        self.archiveModstableWidget.setHorizontalHeaderLabels( ["Path", "Linked", "Enabled" ] )
 
-        # Init modArchive
-        for i, (path, settings) in enumerate( modArchive.items() ):
+        # Init modData
+        for i, (path, settings) in enumerate( modData.items() ):
         #for i, (name, code ) in enumerate( colors ):
             item_path = QTableWidgetItem( path )
             linked = settings[ 'linked' ]
@@ -185,14 +208,14 @@ class Window( QMainWindow, Ui_MainWindow ):
             item_enabled.setFlags( item_enabled.flags() | Qt.ItemIsUserCheckable )
 
             item_enabled.setCheckState( state )
-            self.tableWidget.setItem( i, 0, item_path )
-            self.tableWidget.setItem( i, 1, item_linked )
-            self.tableWidget.setItem( i, 2, item_enabled )
+            self.archiveModstableWidget.setItem( i, 0, item_path )
+            self.archiveModstableWidget.setItem( i, 1, item_linked )
+            self.archiveModstableWidget.setItem( i, 2, item_enabled )
 
 
-        self.tableWidget.setItemDelegateForColumn( 0, self.readonly_delegate )
-        self.tableWidget.setItemDelegateForColumn( 1, self.readonly_delegate )
-        self.tableWidget.cellChanged.connect( self.onCellChanged )
+        self.archiveModstableWidget.setItemDelegateForColumn( 0, self.readonly_delegate )
+        self.archiveModstableWidget.setItemDelegateForColumn( 1, self.readonly_delegate )
+        self.archiveModstableWidget.cellChanged.connect( self.onCellChanged )
 
     def onCellChanged( self, row, column ):
         print( row, column )
@@ -208,29 +231,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         enabled = self.tableWidget.item( row, 2 )
         print( path.text(), linked.text(), enabled.checkState()==Qt.Checked )
 
-
-#        
-#    def new_config( self ):
-#        global modArchive
-#        print( 'ModArchive = [{}]'.format( modArchive ) )
-#        self.archivePath = self.modArchivePathEdit.text()
-#        self.modPath     = self.modFolderPathEdit.text()
-#
-#        if self.archivePath == '' or self.modPath == '':
-#            print( 'error' )
-#            # Add popup here
-#
-#        # Create a placeholder file name
-#        self.config_file = 'tmp.config.json'
-#        worker = self.create_worker( ConfigBuilder, archivePath = self.archivePath )
-#        worker.finished.connect( self.initTable )
-#        print( 'ModArchive = [{}]'.format( modArchive ) )
-
-
-    def installMod( self ):
-        pass
-
-    def uninstallMod( self ):
+    def refresh(self):
         pass
 
     def load( self ):
@@ -271,6 +272,7 @@ class Window( QMainWindow, Ui_MainWindow ):
         result = dialog.exec()
         if result == QDialog.Accepted:
             print( 'Accepted!!!!!' )
+            self.updateModArchiveTable()
 
 
 class SettingsDialog( QDialog ):
@@ -314,7 +316,6 @@ class SettingsDialog( QDialog ):
 
     def create_paths( self ):
         global qsettings
-        pyqt_set_trace()
         keys = [ path for path in qsettings.allKeys() if 'Paths/' in path ]
         for key in keys:
             path = qsettings.value( key )

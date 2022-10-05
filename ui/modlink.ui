@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -25,28 +25,19 @@
     </property>
     <layout class="QGridLayout" name="gridLayout_3">
      <item row="0" column="0">
-      <widget class="QPushButton" name="installModButton">
+      <widget class="QPushButton" name="refreshButton">
        <property name="text">
         <string/>
        </property>
        <property name="icon">
-        <iconset theme="list-add"/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="uninstallModButton">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset theme="list-remove"/>
+        <iconset theme="view-refresh">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -65,7 +56,7 @@
         <item>
          <layout class="QGridLayout" name="gridLayout">
           <item row="0" column="0" colspan="2">
-           <widget class="QTableWidget" name="tableWidget"/>
+           <widget class="QTableWidget" name="archiveModstableWidget"/>
           </item>
           <item row="1" column="0">
            <widget class="QPushButton" name="pushButton_2">
@@ -73,7 +64,8 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset theme="folder-open"/>
+             <iconset theme="folder-open">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -88,7 +80,7 @@
      <item>
       <widget class="QGroupBox" name="groupBox_2">
        <property name="title">
-        <string>GroupBox</string>
+        <string>Installed Mods</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -102,7 +94,8 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset theme="folder-open"/>
+             <iconset theme="folder-open">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -116,7 +109,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>430</x>
@@ -132,7 +125,8 @@
         <string>Clear Links</string>
        </property>
        <property name="icon">
-        <iconset theme="edit-delete"/>
+        <iconset theme="edit-delete">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>
@@ -142,7 +136,8 @@
         <string>Create Links</string>
        </property>
        <property name="icon">
-        <iconset theme="insert-link"/>
+        <iconset theme="insert-link">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>
@@ -180,7 +175,8 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionLoad">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Load</string>
@@ -188,7 +184,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset theme="document-save"/>
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -196,7 +193,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit"/>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -204,7 +202,8 @@
   </action>
   <action name="actionNew">
    <property name="icon">
-    <iconset theme="document-new"/>
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -225,8 +224,8 @@
    <slot>createLinks()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>579</x>
-     <y>345</y>
+     <x>650</x>
+     <y>57</y>
     </hint>
     <hint type="destinationlabel">
      <x>469</x>
@@ -241,8 +240,8 @@
    <slot>clearLinks()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>65</x>
-     <y>339</y>
+     <x>485</x>
+     <y>51</y>
     </hint>
     <hint type="destinationlabel">
      <x>81</x>
@@ -257,8 +256,8 @@
    <slot>updateArchiveFolder()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>48</x>
-     <y>49</y>
+     <x>51</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -273,8 +272,8 @@
    <slot>updateModFolder()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>59</x>
-     <y>81</y>
+     <x>374</x>
+     <y>591</y>
     </hint>
     <hint type="destinationlabel">
      <x>6</x>
@@ -283,34 +282,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>uninstallModButton</sender>
+   <sender>refreshButton</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>uninstallMod()</slot>
+   <slot>refresh()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>66</x>
-     <y>106</y>
+     <x>72</x>
+     <y>49</y>
     </hint>
     <hint type="destinationlabel">
-     <x>133</x>
-     <y>94</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>installModButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>installMod()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>31</x>
-     <y>112</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>107</x>
-     <y>98</y>
+     <x>183</x>
+     <y>55</y>
     </hint>
    </hints>
   </connection>
@@ -320,7 +303,6 @@
   <slot>clearLinks()</slot>
   <slot>updateModFolder()</slot>
   <slot>updateArchiveFolder()</slot>
-  <slot>installMod()</slot>
-  <slot>uninstallMod()</slot>
+  <slot>refresh()</slot>
  </slots>
 </ui>

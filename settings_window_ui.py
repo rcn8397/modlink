@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_SettingsDialog(object):
     def setupUi(self, SettingsDialog):
         SettingsDialog.setObjectName("SettingsDialog")
-        SettingsDialog.resize(395, 274)
+        SettingsDialog.resize(395, 262)
         self.buttonBox = QtWidgets.QDialogButtonBox(SettingsDialog)
         self.buttonBox.setGeometry(QtCore.QRect(40, 220, 341, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
