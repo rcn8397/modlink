@@ -88,6 +88,16 @@ class ReadOnlyDelegate( QStyledItemDelegate ):
     def createEditor( self, parent, option, index ):
         return
 
+def createTreeView( start, tree ):
+    for node in os.listdir( start ):
+        path = os.path.join( start, node )
+        parent = QTreeWidgetItem( tree, [ os.path.basename( node ) ] )
+        if os.path.isdir( path ):
+            createTreeView( path, parent )
+            parent.setIcon( 0, QIcon() )
+        else:
+            parent.setIcon( 0, QIcon() )
+
 class Window( QMainWindow, Ui_MainWindow ):
     def __init__( self, parent = None ):
         super().__init__(parent)
@@ -101,7 +111,8 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.initConfig()
 
         self.connectSignalSlots()
-        self.updateModArchiveTable()
+        self.updateModArchiveTree()
+        self.updateModInstallTree()        
 
     def create_worker( self, _class, *args, **kwargs ):
 
@@ -159,63 +170,22 @@ class Window( QMainWindow, Ui_MainWindow ):
             print( 'Mod Archive Data not found, creating it' )
         
 
-    def updateModArchiveTable(self):
+    def updateModArchiveTree(self):
         global qsettings
-        modArchivePath = qsettings.value( 'Paths/ModArchivePath' )
-        modArchiveData = 'modlink.json'
-        fspath = os.path.join( modArchivePath, modArchiveData )
-        print( fspath )
-
-        # If the modData doesn't exist, create it and return
-        if not os.path.exists( fspath ):
-            return self.updateModData()
-
-        # Else load the modData and build the table
-        modData = None
-        with open( fspath, 'r' ) as f:
-            modData = json.load( f )
-        
-        is_empty = len( modData ) == 0
-        
-        print( 'Building Archives Table' )        
-        self.readonly_delegate = ReadOnlyDelegate( self.archiveModstableWidget )
-
-        if is_empty:
+        path = qsettings.value( 'Paths/ModArchivePath' )
+        if not os.path.exists( path ):
             return
+        self.modArchiveTreeWidget.setHeaderLabel( 'Arhive Folder' )
+        createTreeView( path, self.modArchiveTreeWidget )
 
-        rows = len( modData )
-        first_item = next( iter( modData ) )
-        columns = len( modData[ first_item ] ) + 1
+    def updateModInstallTree(self):
+        global qsettings
+        path = qsettings.value( 'Paths/ModInstallPath' )
+        if not os.path.exists( path ):
+            return
+        self.modInstallTreeWidget.setHeaderLabel( 'Install Folder' )
+        createTreeView( path, self.modInstallTreeWidget )
 
-        self.archiveModstableWidget.setRowCount( rows )
-        self.archiveModstableWidget.setColumnCount( columns + 1 )
-        self.archiveModstableWidget.setHorizontalHeaderLabels( ["Path", "Linked", "Enabled" ] )
-
-        # Init modData
-        for i, (path, settings) in enumerate( modData.items() ):
-        #for i, (name, code ) in enumerate( colors ):
-            item_path = QTableWidgetItem( path )
-            linked = settings[ 'linked' ]
-            if linked:
-                state = Qt.Checked
-                link_str = 'True'
-            else:
-                state = Qt.Unchecked
-                link_str = 'False'
-
-            item_linked = QTableWidgetItem( link_str )
-            item_enabled = QTableWidgetItem()
-            item_enabled.setFlags( item_enabled.flags() | Qt.ItemIsUserCheckable )
-
-            item_enabled.setCheckState( state )
-            self.archiveModstableWidget.setItem( i, 0, item_path )
-            self.archiveModstableWidget.setItem( i, 1, item_linked )
-            self.archiveModstableWidget.setItem( i, 2, item_enabled )
-
-
-        self.archiveModstableWidget.setItemDelegateForColumn( 0, self.readonly_delegate )
-        self.archiveModstableWidget.setItemDelegateForColumn( 1, self.readonly_delegate )
-        self.archiveModstableWidget.cellChanged.connect( self.onCellChanged )
 
     def onCellChanged( self, row, column ):
         print( row, column )
