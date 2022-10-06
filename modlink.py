@@ -143,6 +143,11 @@ class Window( QMainWindow, Ui_MainWindow ):
         self.actionExit.triggered.connect( self.close )
         self.actionPreferences.triggered.connect( self.preferences )
 
+        # Periodic Events
+        self.modRefresh = QTimer( self )
+        self.modRefresh.setInterval( 5000 )
+        self.modRefresh.timeout.connect( self.updateState )
+        self.modRefresh.start()
 
     def initConfig(self, path = None):
         global qsettings
@@ -155,19 +160,25 @@ class Window( QMainWindow, Ui_MainWindow ):
             
         print( self.settings.fileName() )
 
-    def updateModData( self ):
+    def updateState( self ):
+        #pyqt_set_trace()        
+        #print( 'updating state' )
         global qsettings
         modArchivePath = qsettings.value( 'Paths/ModArchivePath' )
-        modArchiveData = 'modlink.json'
-        fspath = os.path.join( modArchivePath, modArchiveData )
-        print( fspath )
-        
-        if not os.path.exists( fspath ):
-            worker = self.create_worker( ConfigBuilder, path = fspath )
-            worker.finished.connect( self.updateModArchiveTable )
+        modInstallPath = qsettings.value( 'Paths/ModInstallPath' )
 
-            # Need to create it
-            print( 'Mod Archive Data not found, creating it' )
+        
+        if os.path.exists( modArchivePath ):
+            pass # Do some processing for the mod archive data
+
+        
+        if os.path.exists( modInstallPath ):
+            pass # Do some processing for the install data
+
+        # Refresh the tree views
+        if False: # when things change refresh...
+            self.updateModArchiveTree()
+            self.updateModInstallTree()        
         
 
     def updateModArchiveTree(self):
@@ -185,21 +196,6 @@ class Window( QMainWindow, Ui_MainWindow ):
             return
         self.modInstallTreeWidget.setHeaderLabel( 'Install Folder' )
         createTreeView( path, self.modInstallTreeWidget )
-
-
-    def onCellChanged( self, row, column ):
-        print( row, column )
-        item = self.tableWidget.item( row, column )
-        print( item )
-        lastState = item.data( Qt.UserRole )
-        currentState = item.checkState()
-        if lastState != currentState:
-            print( 'changed' )
-
-        path    = self.tableWidget.item( row, 0 )
-        linked  = self.tableWidget.item( row, 1 )
-        enabled = self.tableWidget.item( row, 2 )
-        print( path.text(), linked.text(), enabled.checkState()==Qt.Checked )
 
     def refresh(self):
         pass
