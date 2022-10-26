@@ -12,3 +12,7 @@ Create links to archived mods
 
 ## Regenerating UI
 pyuic5 -o main_window_ui.py ui/modlink.ui
+
+
+## Resources
+[icon themes](https://specifications.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html)
