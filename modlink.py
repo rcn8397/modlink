@@ -94,9 +94,9 @@ def createTreeView( start, tree ):
         parent = QTreeWidgetItem( tree, [ os.path.basename( node ) ] )
         if os.path.isdir( path ):
             createTreeView( path, parent )
-            parent.setIcon( 0, QIcon() )
+            parent.setIcon( 0, QIcon().fromTheme("folder"))
         else:
-            parent.setIcon( 0, QIcon() )
+            parent.setIcon( 0, QIcon().fromTheme("document") )
 
 class Window( QMainWindow, Ui_MainWindow ):
     def __init__( self, parent = None ):
